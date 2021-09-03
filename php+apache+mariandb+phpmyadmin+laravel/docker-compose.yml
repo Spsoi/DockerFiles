@@ -1,0 +1,58 @@
+version: '3.1'
+services:
+
+  web:
+    build: ./web
+    environment: 
+      - APACHE_RUN_USER=www-data
+      # - APACHE_RUN_USER=#1000
+    volumes:
+      - ./project:/var/www/html/
+    ports:
+      - 9090:80
+    working_dir: /var/www/html/
+    networks:
+      - laravel-network
+      
+  phpmyadmin:
+    # build: ./phpmyadmin
+    image: phpmyadmin:latest
+    restart: always
+    container_name: phpmyadmin
+    ports:
+      - 6080:80
+    environment:
+      - PMA_ARBITRARY=1
+    networks:
+      - laravel-network 
+
+  db:
+    # образ для контейнера должен быть создан из ./db/docker-compose
+    # build: ./db
+    image: mariadb:latest
+    restart: always
+    container_name: db
+    ports:
+      # в env файле прописывает порт контейкнера (3306)
+      - 8080:3306
+    environment:
+        MYSQL_ROOT_PASSWORD: 123456
+    volumes: 
+    # сохраняем базу данных на локальном сервере
+      - ./databases:/var/lib/mysql
+    networks:
+      - laravel-network
+
+  composer:
+    image: composer:1.6
+    volumes: 
+      - ./project:/var/www/html/
+    working_dir: /var/www/html/
+    command: composer update
+    networks:
+      - laravel-network
+
+#Docker Networks
+networks:
+  laravel-network:
+    driver: bridge
